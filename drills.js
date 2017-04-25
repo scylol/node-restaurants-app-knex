@@ -4,6 +4,7 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 
+
 const Treeize = require('treeize');
 
 const restaurant = new Treeize();
@@ -90,7 +91,6 @@ const knex = require('knex')({
 // knex('grades').select().where('id', 13).then(res => console.log(JSON.stringify(res, null, 2)));
 
 // knex('restaurants').where('id', 50).del().then(res => console.log(res));
-app.use(bodyParser.json());
 // app.get('/restaurants', (req, res) => {
 
 //     let resObject ={};
@@ -119,7 +119,7 @@ app.use(bodyParser.json());
 //           })
 // });
 
-
+app.use(bodyParser.json());
 app.get('/restaurants', (req, res) => {
 
     let resObject ={};
@@ -134,5 +134,52 @@ app.get('/restaurants', (req, res) => {
 
         })
 });
+
+app.post('/restaurants', (req, res) =>{
+  console.log (req.body);
+  const requiredFields = ['name', 'cuisine', 'borough', 'grades'];
+  for (let i=0; i<requiredFields.length; i++) {
+    const field = requiredFields[i];
+    if (!(field in req.body)) {
+      const message = `Missing \`${field}\` in request body`
+      console.error(message);
+      return res.status(400).send(message);
+    }
+  }
+  knex.from('restaurants')
+  .innerJoin('grades', 'restaurants.id', 'grades.restaurant_id')
+  .insert(req.body)
+  .then(end => console.log('inserted', end));
+  // const item = ShoppingList.create(req.body.name, req.body.budget);
+  res.status(201).json(req.body);
+
+
+})
+
+
+
 app.listen(process.env.PORT || 8080);
 
+// {
+//     "name": "Terra Byte Cafe",
+//     "cuisine": "American",
+//     "borough": "Brooklyn",
+//     "grades": [
+//        {
+//            "grade": "C",
+//            "score": 42
+//        },
+//        {
+//            "grade": "B",
+//            "score": 72
+//        },
+//        {
+//            "grade": "D",
+//            "score": 35
+//        },
+//        {
+//            "grade": "A",
+//            "score": 95
+//        }
+//     ]
+// }
