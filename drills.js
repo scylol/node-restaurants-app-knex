@@ -4,6 +4,10 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 
+const Treeize = require('treeize');
+
+const restaurant = new Treeize();
+
 // Require Knex and make connection
 const knex = require('knex')({
   client: 'pg',
@@ -87,47 +91,48 @@ const knex = require('knex')({
 
 // knex('restaurants').where('id', 50).del().then(res => console.log(res));
 app.use(bodyParser.json());
+// app.get('/restaurants', (req, res) => {
+
+//     let resObject ={};
+//     knex.select('restaurants.id', 'name', 'cuisine', 'borough', 'grades.id as gradeId', 'grade', 'score')
+//         .from('restaurants')
+//         .innerJoin('grades', 'restaurants.id', 'grades.restaurant_id')
+//         .orderBy('date', 'desc')
+//         .limit(10)
+//         .then(results =>{
+//         results.forEach(row =>{
+//             if (!(row.id in resObject)){
+//               resObject[row.id] = {
+//                 name: row.name,
+//                 cuisine: row.cuisine,
+//                 borough: row.borough,
+//                 grades: []
+//               }  
+//             }
+//             resObject[row.id].grades.push({
+//               gradeId: row.gradeId,
+//               grade: row.grade,
+//               score: row.score
+//             })
+//           })
+//           res.json(resObject);
+//           })
+// });
+
+
 app.get('/restaurants', (req, res) => {
 
     let resObject ={};
-    knex.select('restaurants.id', 'name', 'cuisine', 'borough', 'grades.id as gradeId', 'grade', 'score')
+    knex.select('restaurants.id', 'name', 'cuisine', 'borough', 'grades.id as grades:id', 'grade as grades:grade', 'score as grades:score')
         .from('restaurants')
         .innerJoin('grades', 'restaurants.id', 'grades.restaurant_id')
         .orderBy('date', 'desc')
         .limit(10)
         .then(results =>{
-        results.forEach(row =>{
-            if (!(row.id in resObject)){
-              resObject[row.id] = {
-                name: row.name,
-                cuisine: row.cuisine,
-                borough: row.borough,
-                grades: []
-              }  
-            }
-            resObject[row.id].grades.push({
-              gradeId: row.gradeId,
-              grade: row.grade,
-              score: row.score
-            })
-          })
-          res.json(resObject);
-          })
+          restaurant.grow(results);
+          res.json(restaurant.getData());
+
+        })
 });
 app.listen(process.env.PORT || 8080);
-// const hydrated = {};
-// people.forEach(row => {
-//     if ( !(row.id in hydrated) ) {
-//         hydrated[row.id] = {
-//             id: row.id,
-//             name: row.name,
-//             age: row.age,
-//             pets: []
-//         }
-//     }
-//     hydrated[row.id].pets.push({
-//         name: row.petName,
-//         type: row.petType,
-//     });
-// });
-// console.log(hydrated);
+
