@@ -1,5 +1,8 @@
 // clear the console before each run
 process.stdout.write('\033c');
+const express = require('express');
+const app = express();
+const bodyParser = require('body-parser');
 
 // Require Knex and make connection
 const knex = require('knex')({
@@ -7,7 +10,7 @@ const knex = require('knex')({
   connection: {
     database: 'dev-restaurants-app'
   },
-  // debug: true
+  debug: true
 });
 
 // If you're using ElephantSQL then the connection will look like this
@@ -83,3 +86,48 @@ const knex = require('knex')({
 // knex('grades').select().where('id', 13).then(res => console.log(JSON.stringify(res, null, 2)));
 
 // knex('restaurants').where('id', 50).del().then(res => console.log(res));
+app.use(bodyParser.json());
+app.get('/restaurants', (req, res) => {
+
+    let resObject ={};
+    knex.select('restaurants.id', 'name', 'cuisine', 'borough', 'grades.id as gradeId', 'grade', 'score')
+        .from('restaurants')
+        .innerJoin('grades', 'restaurants.id', 'grades.restaurant_id')
+        .orderBy('date', 'desc')
+        .limit(10)
+        .then(results =>{
+        results.forEach(row =>{
+            if (!(row.id in resObject)){
+              resObject[row.id] = {
+                name: row.name,
+                cuisine: row.cuisine,
+                borough: row.borough,
+                grades: []
+              }  
+            }
+            resObject[row.id].grades.push({
+              gradeId: row.gradeId,
+              grade: row.grade,
+              score: row.score
+            })
+          })
+          res.json(resObject);
+          })
+});
+app.listen(process.env.PORT || 8080);
+// const hydrated = {};
+// people.forEach(row => {
+//     if ( !(row.id in hydrated) ) {
+//         hydrated[row.id] = {
+//             id: row.id,
+//             name: row.name,
+//             age: row.age,
+//             pets: []
+//         }
+//     }
+//     hydrated[row.id].pets.push({
+//         name: row.petName,
+//         type: row.petType,
+//     });
+// });
+// console.log(hydrated);
